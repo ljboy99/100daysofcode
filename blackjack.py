@@ -1,4 +1,13 @@
 import random
+#This is probably the most effort I've put into a script so far
+#Also the longest script I've written so far at 150+ lines
+#I want to create another script which dumps winning hands
+#into a txt so I can make another which shows the best hands 
+#and when to hit / stan
+#Sept 7 2023 - added money so we can gamble now
+#Sept 8 2023 - added function to log game results and cards drawn to txt file
+#txt file will log as
+#RESULT, PLAYEROPENINGHAND, PLAYERDRAWS, DEALEROPENINGHAND, DEALERDRAWS
 
 logo = """
 .------.            _     _            _    _            _    
@@ -21,13 +30,45 @@ cards = [A, 2, 3, 4, 5, 6, 7, 8, 9, 10, K, Q, J]
 playerhand = []
 dealerhand = []
 playerActive = None
+money = 100
+bet = 0
+gameresult = ''
 
+def writeresult():
+    global playerhand, gameresult, dealerhand
+    f = open("results.txt", "a")
+    f.write(str(gameresult))
+    f.write(", ")
+    f.write(str(playerhand[0:2]).replace(',',' +'))
+    f.write(", ")
+    f.write(str(playerhand[2:]).replace(',',' +'))
+    f.write(", ")
+    f.write(str(dealerhand[0:2]).replace(',',' +'))
+    f.write(", ")
+    f.write(str(dealerhand[2:]).replace(',',' +'))
+    f.write("\n")
+    f.close()
+    playerhand = []
+    dealerhand = []
+
+def wager():
+    global money
+    global bet
+    bet = int(input(f"You have ${money}. How much are you betting?\n$"))
+    money -= bet
+    return bet
+
+def wagerwin():
+    global money, bet
+    print(f"You won {bet}.")
+    money += bet*2
+    print(f"Your balance is now ${money}")
 
 def dealerFirstDraw():
     dealerhand.append(random.choice(cards))
     dealerhand.append(random.choice(cards))
     dealerSumAdjust()
-    print("The dealer's hand value is " + str(sum(dealerhand)))
+    #print("The dealer's hand value is " + str(sum(dealerhand)))
     print("The dealer has a face card of", dealerhand[-1])
 
 
@@ -53,18 +94,24 @@ def printDealerHand():
 
 
 def dealerDrawCard():
-    global A
-    global dealerhand
+    global A, gameresult, dealerhand
     while sum(dealerhand) <= sum(playerhand) and sum(dealerhand) < 21:
         dealerhand.append(random.choice(cards))
         print("The dealer drew " + str(dealerhand[-1]))
         printDealerHand()
         if sum(dealerhand) > sum(playerhand) and sum(dealerhand) <= 21:
             print("The dealer wins!")
+            gameresult = "DEALER WINS"
+            return gameresult
         elif sum(dealerhand) == sum(playerhand) and sum(dealerhand) >= 17 and sum(playerhand) >= 17:
             print("PUSH!")
+            gameresult = "TIE"
+            return gameresult
         elif A not in dealerhand and sum(dealerhand) > 21:
             print("The dealer busts! You win!")
+            gameresult = "PLAYER WINS"
+            wagerwin()
+            return gameresult
         else:
             continue
 
@@ -118,6 +165,9 @@ def playerChoice():
         print("The dealer shows his hand.\n" + str(dealerhand))
         return playerActive, playerhand
     elif choice[0].lower() == 'd':
+        global money, bet
+        money -= bet
+        bet *= 2
         playerDrawCard()
         printPlayerHand()
         if sum(playerhand) <= 21:
@@ -125,15 +175,17 @@ def playerChoice():
         else:
             playerActive = False
         print("The dealer shows his hand.\n" + str(dealerhand))
-        return playerActive, playerhand
+        return playerActive, playerhand, bet
 
 def game():
+    wager()
     playerFirstDraw()
     dealerFirstDraw()
     printPlayerHand()
     playerChoice()
     if playerActive == True:
         dealerDrawCard()
+    writeresult()
     again()
 
 def again():
