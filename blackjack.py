@@ -1,13 +1,8 @@
-import random
+import random, json, sys
 #This is probably the most effort I've put into a script so far
 #Also the longest script I've written so far at 150+ lines
-#I want to create another script which dumps winning hands
-#into a txt so I can make another which shows the best hands 
-#and when to hit / stan
-#Sept 7 2023 - added money so we can gamble now
-#Sept 8 2023 - added function to log game results and cards drawn to txt file
-#txt file will log as
-#RESULT, PLAYEROPENINGHAND, PLAYERDRAWS, DEALEROPENINGHAND, DEALERDRAWS
+#I want to write a new script that will look at the results txt
+#and tall what the most successful strategies have been 
 
 logo = """
 .------.            _     _            _    _            _    
@@ -27,13 +22,12 @@ A = 11
 cards = [A, 2, 3, 4, 5, 6, 7, 8, 9, 10, K, Q, J]
 # tens = ['10', 'King', 'Queen', 'Jack']
 
-
-
 playerhand = []
 dealerhand = []
 playerActive = None
 moneyfile = open("balance.txt", "r+")
 money = 100
+
 bet = 0
 gameresult = ''
 
@@ -57,10 +51,18 @@ def writeresult():
 def wager():
     global money
     global bet
-    bet = int(input(f"You have ${money}. How much are you betting?\n$"))
-    money -= bet
-    return bet
-
+    if money != 0:
+      bet = int(input(f"You have ${money}. How much are you betting?\n$"))
+      if bet > money:
+        print(f"""You don't have enough money!
+The most you can bet is ${money}""")
+        wager()
+      else:
+        money -= bet
+        return bet
+    else:
+      print("You're out of funds!")
+      sys.exit()
 
 def wagerwin():
     global money, bet
@@ -209,5 +211,6 @@ def again():
 
 print(logo)
 print("Welcome to blackjack.")
+
 
 game()
